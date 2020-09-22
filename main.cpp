@@ -82,6 +82,7 @@ void ProcessArray() {
 
     cl::CommandQueue queue(context, device);
 
+    err = queue.enqueueFillBuffer(inBuf, 3, sizeof(int) * 5, sizeof(int) * (vec.size() - 1000));
     err = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(vec.size()));
     err = queue.enqueueReadBuffer(outBuf, CL_TRUE, 0, sizeof(int) * vecOut.size(), vecOut.data());
 
