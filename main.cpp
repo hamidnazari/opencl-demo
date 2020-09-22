@@ -2,6 +2,7 @@
 #include "fstream"
 #include "iostream"
 #include "numeric"
+#include "array"
 
 cl::Program createProgram(const std::string& file) {
     std::vector<cl::Platform> platforms;
@@ -91,10 +92,50 @@ void ProcessArray() {
     std::cout << vecOut.front() << std::endl;
 }
 
+void ProcessMultiArray() {
+    auto program = createProgram("ProcessMultiArray.cl");
+    auto context = program.getInfo<CL_PROGRAM_CONTEXT>();
+    auto devices = context.getInfo<CL_CONTEXT_DEVICES>();
+    auto& device = devices.front();
+
+    const int numRows = 3;
+    const int numCols = 2;
+    const int count = numRows * numCols;
+    std::array<std::array<int, numCols>, numRows> arr = {{
+        {1,2},
+        {3,4},
+        {5,6}
+    }};
+
+    cl_int err = 0;
+
+    cl::Buffer buf(context,
+                   CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                     sizeof(int) * count,
+                     arr.data(),
+                     &err);
+
+    cl::Kernel kernel(program, "ProcessMultiArray", &err);
+    err = kernel.setArg(0, buf);
+
+    cl::CommandQueue queue(context, device);
+
+    err = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(numCols, numRows));
+    err = queue.enqueueReadBuffer(buf, CL_TRUE, 0, sizeof(int) * count, arr.data());
+
+    for (int i = 0; i < numRows; ++i) {
+        for (int j = 0; j < numCols; ++j) {
+            std::cout << arr[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
 
 int main() {
 //    HelloWorld();
-    ProcessArray();
+//    ProcessArray();
+    ProcessMultiArray();
 
     return 0;
 }
