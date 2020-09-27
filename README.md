@@ -1,7 +1,13 @@
 # OpenCL Demo
 
-Build
+How to build:
 
 ```bash
-$ g++ main.cpp -std=c++14 -framework OpenCL
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
 ```
+
+Based on OpenCL tutorial series by Wesley Shillingford.  
+https://www.youtube.com/watch?v=YU_pRT-Be0c
