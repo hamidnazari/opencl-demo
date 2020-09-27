@@ -1,5 +1,4 @@
-#include <OpenCL/cl.hpp>
-#include "fstream"
+#include <OpenCL/opencl.hpp>
 #include "iostream"
 #include "numeric"
 #include "array"
@@ -7,29 +6,26 @@
 cl::Program createProgram(const std::string& file) {
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
-
     assert(platforms.size() > 0);
 
     auto platform = platforms.front();
 
     std::vector<cl::Device> devices;
     platforms.front().getDevices(CL_DEVICE_TYPE_GPU, &devices);
-
     assert(devices.size() > 0);
 
     auto device = devices.front();
     auto vendor = device.getInfo<CL_DEVICE_VENDOR>();
     auto version = device.getInfo<CL_DEVICE_VERSION>();
 
-    std::ifstream kernelFile(file);
-    std::string src(std::istreambuf_iterator<char>(kernelFile), (std::istreambuf_iterator<char>()));
-
-    cl::Program::Sources sources(1, std::make_pair(src.c_str(), src.length() + 1));
+    std::vector<std::string> s = { file };
+    cl::Program::Sources sources(s);
 
     cl::Context context(device);
     cl::Program program(context, sources);
 
-    auto err = program.build("-cl-std=CL1.2");
+    auto err = program.build();
+    assert(err == CL_SUCCESS);
 
     return program;
 }
