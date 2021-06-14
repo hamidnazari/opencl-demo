@@ -175,12 +175,51 @@ void NumericalReduction() {
     std::cout << "Sum is: " << sum << std::endl;
 }
 
+void LargeLoops() {
+    auto program = createProgram("LargeLoops.cl");
+    auto context = program.getInfo<CL_PROGRAM_CONTEXT>();
+    auto devices = context.getInfo<CL_CONTEXT_DEVICES>();
+    auto& device = devices.front();
+
+    const int numRows = 3;
+    const int numCols = 2;
+    const int count = numRows * numCols;
+    std::array<std::array<int, numCols>, numRows> arr = {{
+        {10,5},
+        {30,15},
+        {50,25}
+     }};
+
+    cl_int err = 0;
+
+    cl::Buffer buf(context,
+                   CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                   sizeof(int) * count,
+                   arr.data(),
+                   &err);
+
+    cl::Kernel kernel(program, "LargeLoops", &err);
+    err = kernel.setArg(0, buf);
+
+    cl::CommandQueue queue(context, device);
+
+    err = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(numCols, numRows));
+    err = queue.enqueueReadBuffer(buf, CL_TRUE, 0, sizeof(int) * count, arr.data());
+
+    for (int i = 0; i < numRows; ++i) {
+        for (int j = 0; j < numCols; ++j) {
+            std::cout << arr[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
 
 int main() {
 //    HelloWorld();
 //    ProcessArray();
 //    ProcessMultiArray();
-    NumericalReduction();
+//    NumericalReduction();
+    LargeLoops();
 
     return 0;
 }
